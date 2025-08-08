@@ -18,7 +18,6 @@ async function coreHandler(req, res, session){
     if(!data?.access_token){
       return res.status(500).send("Auth failed: generateSession returned no access_token.");
     }
-    // iron-session core API: assign property, then save
     session.access_token = data.access_token;
     await session.save();
     res.send(`<script>window.opener && window.opener.postMessage({type:'kite_login_ok'},'*');window.close();</script>Logged in.`);

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import axios from 'axios';
 
+function dateOnly(x){ try { return String(x).split('T')[0]; } catch { return x; } }
+
 const SYMBOLS = [
   { label: 'NIFTY', value: 'NIFTY' },
   { label: 'HDFC', value: 'HDFC' },
@@ -10,19 +12,17 @@ const SYMBOLS = [
 ];
 
 function FocusPanel({ base, expiryKey, strikes, mapByStrike }){
-  // Default anchor: if NIFTY + 2025-08-14 -> 24350 else center strike
-  const defaultAnchor = (base==='NIFTY' && expiryKey?.startsWith('2025-08-14')) ? 24350 :
+  const defaultAnchor = (base==='NIFTY' && dateOnly(expiryKey)==='2025-08-14') ? 24350 :
     (strikes[Math.floor(strikes.length/2)] || null);
   const [anchor, setAnchor] = useState(defaultAnchor);
-  const [q, setQ] = useState({}); // quotes map by "NFO:TRADINGSYMBOL"
+  const [q, setQ] = useState({});
   const timerRef = useRef(null);
 
-  // compute 4 CE (>= anchor) and 4 PE (<= anchor) strikes from available list
   const stepStrikes = useMemo(()=>{
     if(!strikes?.length || !anchor) return { ce:[], pe:[] };
     const sorted = [...strikes].sort((a,b)=>a-b);
     const ce = sorted.filter(s=> s>=anchor).slice(0,4);
-    const pes = sorted.filter(s=> s<=anchor).slice(-4).reverse(); // anchor, lower1, lower2, lower3
+    const pes = sorted.filter(s=> s<=anchor).slice(-4).reverse();
     return { ce, pe: pes };
   },[strikes, anchor]);
 
@@ -44,9 +44,7 @@ function FocusPanel({ base, expiryKey, strikes, mapByStrike }){
     try{
       const { data } = await axios.get('/api/quotes', { params:{ instruments: instruments.join(',') } });
       setQ(data.quotes || {});
-    }catch(e){
-      // ignore
-    }
+    }catch(e){}
   }
 
   useEffect(()=>{
@@ -115,7 +113,7 @@ function FocusPanel({ base, expiryKey, strikes, mapByStrike }){
 
 export default function Options(){
   const [base, setBase] = useState('NIFTY');
-  const [expiries, setExpiries] = useState([]); // YYYY-MM-DD keys
+  const [expiries, setExpiries] = useState([]);
   const [expiry, setExpiry] = useState('');
   const [strikes, setStrikes] = useState([]);
   const [chain, setChain] = useState([]);
@@ -139,7 +137,7 @@ export default function Options(){
     setNote(data.note || '');
     setStrikes(data.strikes||[]);
     setExpiries(data.expiries||[]);
-    setExpiry(data.chosenExpiry || e || data.expiries?.[0] || '');
+    setExpiry((data.chosenExpiry && data.chosenExpiry.split('T')[0]) || (e && String(e).split('T')[0]) || (data.expiries?.[0] && String(data.expiries[0]).split('T')[0]) || '');
     setChain(data.chain||[]);
   }
 
@@ -185,7 +183,7 @@ export default function Options(){
         </label>
         <label>Expiry (filtered to today → 2025-08-14)
           <select value={expiry} onChange={e=>setExpiry(e.target.value)}>
-            {expiries.map(x=> <option key={x} value={x}>{x}</option>)}
+            {expiries.map(x=> {const d=dateOnly(x); return <option key={d} value={d}>{d}</option>;})}
           </select>
         </label>
       </div>
@@ -249,7 +247,6 @@ export default function Options(){
         </div>
       </div>
 
-      {/* Focused 8-pack below */}
       <FocusPanel base={base} expiryKey={expiry} strikes={strikes} mapByStrike={mapByStrike} />
     </div>
   );

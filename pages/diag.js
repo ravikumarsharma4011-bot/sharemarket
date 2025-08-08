@@ -7,12 +7,8 @@ export default function Diag(){
   const [error, setError] = useState("");
   useEffect(()=>{
     (async ()=>{
-      try{
-        const s = await axios.get('/api/auth/status'); setStatus(s.data);
-      }catch(e){ setError("status: " + (e.message)); }
-      try{
-        const l = await axios.get('/api/auth/login'); setLogin(l.data);
-      }catch(e){ setError(prev => (prev ? prev + " | " : "") + "login: " + (e.response?.data?.error || e.message)); }
+      try{ const s = await axios.get('/api/auth/status'); setStatus(s.data); }catch(e){ setError("status: " + (e.message)); }
+      try{ const l = await axios.get('/api/auth/login'); setLogin(l.data); }catch(e){ setError(prev => (prev ? prev + " | " : "") + "login: " + (e.response?.data?.error || e.message)); }
     })();
   },[]);
   return (

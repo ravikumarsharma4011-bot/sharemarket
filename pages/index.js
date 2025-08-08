@@ -15,7 +15,6 @@ export default function Home(){
       const data = res.data || {};
       if(!data.ok || !data.url) throw new Error(data.error || "No login URL returned");
       const w = window.open(data.url, 'kite_login', 'width=600,height=800');
-      // If pop-up is blocked, fall back to full-page redirect
       if(!w || w.closed || typeof w.closed === "undefined"){
         window.location.href = data.url;
       } else {
@@ -29,6 +28,7 @@ export default function Home(){
       setBusy(false);
     }
   }
+
   return (
     <div className="container">
       <h1>sharemarket0607</h1>
@@ -45,7 +45,8 @@ export default function Home(){
         <button className="btn" onClick={login} disabled={busy}>{busy ? "Connecting..." : "Login with Zerodha"}</button>
       )}
       {err && <p className="muted" style={{color:'#ffb3b3'}}>{err}</p>}
-      <div className="grid">
+
+      <div className="grid" style={{marginTop:16}}>
         <div className="card">
           <h3>Symbols</h3>
           <ul>
@@ -55,7 +56,7 @@ export default function Home(){
         </div>
         <div className="card">
           <h3>Defaults</h3>
-          <p>Product: <b>{process.env.NEXT_PUBLIC_DEFAULT_PRODUCT}</b> • Order Type: <b>{process.env.NEXT_PUBLIC_DEFAULT_ORDER_TYPE}</b></p>
+          <p>Product: <b>{process.env.NEXT_PUBLIC_DEFAULT_PRODUCT||'NRML'}</b> • Order Type: <b>{process.env.NEXT_PUBLIC_DEFAULT_ORDER_TYPE||'LIMIT'}</b></p>
         </div>
         <div className="card">
           <h3>Diagnostics</h3>

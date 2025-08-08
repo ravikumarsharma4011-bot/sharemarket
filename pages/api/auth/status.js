@@ -1,5 +1,4 @@
 import { withSessionApi } from "@/lib/session";
-
 export default withSessionApi(async function handler(req, res, session){
   try{
     const token = session?.access_token || null;
