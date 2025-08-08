@@ -19,4 +19,4 @@ export async function GET(req: NextRequest){
   if(useLive && token){ data = generateMock(limit) } else { data = generateMock(limit) }
   const filtered = industry && industry!=='All' ? data.filter(r => (r.industry||'').toLowerCase()===industry.toLowerCase()) : data
   return NextResponse.json({ timestamp:new Date().toISOString(), universe:'NSE', window_minutes:60, data: filtered.slice(0,limit) })
-}
+} 
