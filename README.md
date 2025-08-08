@@ -1,16 +1,31 @@
-# NSE Top Gainers (Last 1 Hour) — with Zerodha Login
-Includes a Login with Zerodha flow and prior fixes (no aliases).
+# sharemarket0607 — Vercel-ready (Zerodha Options)
 
-## Env vars (Vercel → Project → Settings → Environment Variables)
-- KITE_API_KEY
-- KITE_API_SECRET
-- KITE_REDIRECT_URL  (e.g. https://YOUR.vercel.app/api/kite/callback)
-- USE_LIVE=false
+This build is designed for **Vercel** (serverless). It removes the custom Express server and uses **Next.js API routes** and **iron-session** cookies for auth/session. Live data uses **polling** (Vercel doesn't support persistent WebSockets).
 
-## Routes
-- /api/kite/login → redirects to Zerodha login
-- /api/kite/callback → exchanges request_token → access_token, stores secure cookie
-- /api/kite/status → returns { ok: boolean }
-- /api/top-gainers → mock data for now; set USE_LIVE=true + wire real fetch
+## Deploy (Vercel)
+1) Push to GitHub
+2) Import the repo in Vercel
+3) Set Environment Variables:
+   - `KITE_API_KEY`
+   - `KITE_API_SECRET`
+   - `KITE_REDIRECT_URL` → `https://<your-domain>.vercel.app/api/auth/callback` (must be whitelisted in your Kite app)
+   - `SESSION_PASSWORD` → random 32+ chars
+   - `NEXT_PUBLIC_DEFAULT_PRODUCT=NRML`
+   - `NEXT_PUBLIC_DEFAULT_ORDER_TYPE=LIMIT`
+4) Redeploy
 
-Upload contents to repo root and deploy on Vercel (Next.js).
+## Usage
+- Visit `/` → Login with Zerodha (popup). After success it closes and reloads.
+- Go to `/options` → Interactive chain → click CE/PE to prefill order form → place **NRML + LIMIT** orders by default.
+
+## Built-in hardening (based on our previous errors)
+- Force **NFO** for options instruments
+- Auto **tick-size rounding** & **lot-size enforcement**
+- Defaults to **NRML + LIMIT**
+- Graceful auth/session using encrypted cookie (no filesystem)
+- Defensive checks for `tradingsymbol`, quantity > 0, instrument presence
+- All API calls wrapped with error responses
+
+> If you need **true live ticks**, use a push service (Ably/Pusher) or a small external Node worker hosting the ticker, then feed updates to the app. For most flows, 1–2s polling of `/api/quotes` works fine.
+
+MIT © 2025
