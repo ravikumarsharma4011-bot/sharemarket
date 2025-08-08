@@ -7,7 +7,7 @@ function ensureMultiple(val, lot){ const q = Math.max(lot, Math.round(val/lot)*l
 export default withSessionApi(async function handler(req, res, session){
   if(req.method !== 'POST') return res.status(405).json({ ok:false, error: 'Method not allowed' });
   try{
-    const access_token = session.get("access_token");
+    const access_token = session?.access_token;
     if(!access_token) return res.status(401).json({ ok:false, error: "Not logged in" });
 
     const {

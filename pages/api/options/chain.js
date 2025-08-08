@@ -5,7 +5,7 @@ export default withSessionApi(async function handler(req, res, session){
   try{
     const base = req.query.base || 'NIFTY';
     const expiry = req.query.expiry;
-    const access_token = session.get("access_token");
+    const access_token = session?.access_token;
     if(!access_token) return res.status(401).json({ ok:false, error: "Not logged in" });
 
     const k = getKite(access_token);
