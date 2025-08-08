@@ -3,14 +3,31 @@ import axios from 'axios';
 
 export default function Home(){
   const [session, setSession] = useState(null);
-  useEffect(()=>{ axios.get('/api/auth/status').then(r=>setSession(r.data.session)); },[]);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  useEffect(()=>{ axios.get('/api/auth/status').then(r=>setSession(r.data.session)).catch(()=>{}); },[]);
 
   async function login(){
-    const { data } = await axios.get('/api/auth/login');
-    const win = window.open(data.url, 'kite_login', 'width=600,height=800');
-    window.addEventListener('message', (e)=>{
-      if(e.data?.type==='kite_login_ok'){ window.location.reload(); }
-    });
+    setErr("");
+    setBusy(true);
+    try{
+      const res = await axios.get('/api/auth/login', { timeout: 15000 });
+      const data = res.data || {};
+      if(!data.ok || !data.url) throw new Error(data.error || "No login URL returned");
+      const w = window.open(data.url, 'kite_login', 'width=600,height=800');
+      // If pop-up is blocked, fall back to full-page redirect
+      if(!w || w.closed || typeof w.closed === "undefined"){
+        window.location.href = data.url;
+      } else {
+        window.addEventListener('message', (e)=>{
+          if(e.data?.type==='kite_login_ok'){ window.location.reload(); }
+        });
+      }
+    }catch(e){
+      setErr("Login init failed: " + (e.response?.data?.error || e.message));
+    }finally{
+      setBusy(false);
+    }
   }
   return (
     <div className="container">
@@ -25,8 +42,9 @@ export default function Home(){
           </div>
         </div>
       ) : (
-        <button className="btn" onClick={login}>Login with Zerodha</button>
+        <button className="btn" onClick={login} disabled={busy}>{busy ? "Connecting..." : "Login with Zerodha"}</button>
       )}
+      {err && <p className="muted" style={{color:'#ffb3b3'}}>{err}</p>}
       <div className="grid">
         <div className="card">
           <h3>Symbols</h3>
@@ -38,6 +56,10 @@ export default function Home(){
         <div className="card">
           <h3>Defaults</h3>
           <p>Product: <b>{process.env.NEXT_PUBLIC_DEFAULT_PRODUCT}</b> • Order Type: <b>{process.env.NEXT_PUBLIC_DEFAULT_ORDER_TYPE}</b></p>
+        </div>
+        <div className="card">
+          <h3>Diagnostics</h3>
+          <a className="btn outline" href="/diag">Open /diag</a>
         </div>
       </div>
     </div>
