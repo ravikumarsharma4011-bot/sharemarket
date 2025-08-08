@@ -19,6 +19,7 @@ export default function Options(){
   const [expiry, setExpiry] = useState('');
   const [strikes, setStrikes] = useState([]);
   const [chain, setChain] = useState([]);
+  const [note, setNote] = useState('');
   const [selected, setSelected] = useState(null);
   const [form, setForm] = useState({
     price:'', quantity:'', side:'BUY', product: process.env.NEXT_PUBLIC_DEFAULT_PRODUCT || 'NRML', order_type: process.env.NEXT_PUBLIC_DEFAULT_ORDER_TYPE || 'LIMIT'
@@ -35,9 +36,10 @@ export default function Options(){
 
   async function fetchChain(b,e){
     const { data } = await axios.get('/api/options/chain',{ params:{ base:b, expiry:e } });
+    setNote(data.note || '');
     setStrikes(data.strikes||[]);
     setExpiries(data.expiries||[]);
-    setExpiry(e || data.expiries?.[0] || '');
+    setExpiry(data.chosenExpiry || e || data.expiries?.[0] || '');
     setChain(data.chain||[]);
   }
 
@@ -81,19 +83,21 @@ export default function Options(){
             {SYMBOLS.map(s=><option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
         </label>
-        <label>Expiry
+        <label>Expiry (filtered to today → 2025-08-14)
           <select value={expiry} onChange={e=>setExpiry(e.target.value)}>
             {expiries.map(x=> <option key={x} value={x}>{dateLabel(x)}</option>)}
           </select>
         </label>
       </div>
 
+      {note ? <div className="card"><b>Note:</b> {note}</div> : null}
+
       <div className="grid two">
         <div className="card">
           <h3>Option Chain (NFO)</h3>
           <div className="chain">
             <div className="row head"><div>CE</div><div>Strike</div><div>PE</div></div>
-            {strikes.map(s=>{
+            {strikes.length ? strikes.map(s=>{
               const ce = mapByStrike[`${s}-CE`];
               const pe = mapByStrike[`${s}-PE`];
               return (
@@ -107,7 +111,7 @@ export default function Options(){
                   </div>
                 </div>
               );
-            })}
+            }) : <div className="cell">No strikes in the selected window.</div>}
           </div>
         </div>
 
