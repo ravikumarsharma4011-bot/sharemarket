@@ -1,6 +1,5 @@
 import { withSessionApi } from "@/lib/session";
 import { getKite } from "@/lib/kite";
-
 export default withSessionApi(async function handler(req, res, session){
   try{
     const access_token = session?.access_token;
@@ -10,7 +9,5 @@ export default withSessionApi(async function handler(req, res, session){
     const k = getKite(access_token);
     const quotes = await k.getQuote(instruments);
     res.json({ ok:true, quotes });
-  }catch(e){
-    res.status(500).json({ ok:false, error: e.message });
-  }
+  }catch(e){ res.status(500).json({ ok:false, error: e.message }); }
 });

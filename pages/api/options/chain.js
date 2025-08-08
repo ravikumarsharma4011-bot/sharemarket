@@ -7,8 +7,8 @@ function keyOf(d){ const x = new Date(d); return x.toISOString().split('T')[0]; 
 export default withSessionApi(async function handler(req, res, session){
   try{
     const base = req.query.base || 'NIFTY';
-    const expiryParamRaw = req.query.expiry || ''; // may be ISO with time or just date
-    const expiryParam = String(expiryParamRaw).split('T')[0]; // normalize to YYYY-MM-DD
+    const expiryParamRaw = req.query.expiry || '';
+    const expiryParam = String(expiryParamRaw).split('T')[0];
     const access_token = session?.access_token;
     if(!access_token) return res.status(401).json({ ok:false, error: "Not logged in" });
 
@@ -17,14 +17,13 @@ export default withSessionApi(async function handler(req, res, session){
 
     const k = getKite(access_token);
     const all = await k.getInstruments();
-
     const filteredAll = all
       .filter(i => i.exchange==='NFO' && i.segment==='NFO-OPT' && i.name===base)
       .map(i => ({ ...i, expiry_key: keyOf(i.expiry) }));
 
     const allKeys = Array.from(new Set(filteredAll.map(i => i.expiry_key))).sort((a,b)=> new Date(a) - new Date(b));
 
-    const todayKey = new Date(now.toISOString().split('T')[0]);
+    const todayKey = new Date((new Date()).toISOString().split('T')[0]);
     const windowKeys = allKeys.filter(k => {
       const d = new Date(k);
       return d >= todayKey && d <= cutoff;
@@ -37,7 +36,6 @@ export default withSessionApi(async function handler(req, res, session){
     const chosenKey = (expiryParam && windowKeys.includes(expiryParam)) ? expiryParam : windowKeys[0];
 
     let chain = filteredAll.filter(i => i.expiry_key === chosenKey);
-
     const strikes = Array.from(new Set(chain.map(i => i.strike))).sort((a,b)=>a-b);
 
     const ids = chain.map(i => `${i.exchange}:${i.tradingsymbol}`);
