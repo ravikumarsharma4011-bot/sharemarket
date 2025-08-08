@@ -1,16 +1,9 @@
-# NSE Top Gainers (Last 1 Hour)
+# NSE Top Gainers (Last 1 Hour) — No Alias Edition
 
-A ready-to-deploy **Next.js** site that lists **Top 50 NSE gainers over the last 60 minutes** with an **industry filter**.
-It supports **Demo (mock)** and **Live** modes. Live mode is designed to work with a Zerodha **Kite Connect** app.
+This build removes the `@/*` alias and uses **relative imports** everywhere,
+and fixes the CSS import path. It should deploy on Vercel without config.
 
-See full instructions inside this README after you unzip.
-
-## Quick Start
-1) `npm install`
-2) `npm run dev`
-3) Open http://localhost:3000
-
-For deployment on Vercel:
-- Add env vars: `KITE_API_KEY`, `KITE_API_SECRET`, `USE_LIVE` (true/false)
-- Set Kite redirect URL to `/api/kite/callback`
-- Flip `USE_LIVE=true` when you wire the real data fetching in `/api/top-gainers/route.ts`
+## Deploy
+1) Upload these files (unzipped) to your GitHub repo **root** (so `app/` and `package.json` are visible).
+2) On Vercel: New Project → import repo → Framework: **Next.js** → Deploy.
+3) (Optional) Add env vars later: `KITE_API_KEY`, `KITE_API_SECRET`, `USE_LIVE`.
