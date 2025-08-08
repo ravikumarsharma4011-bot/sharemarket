@@ -1,0 +1,2 @@
+import { NextResponse } from 'next/server'
+export async function GET(){ const apiKey=process.env.KITE_API_KEY; const redirectUri=process.env.KITE_REDIRECT_URL; if(!apiKey||!redirectUri) return NextResponse.json({ok:false,error:'Missing KITE_API_KEY or KITE_REDIRECT_URL'}, {status:500}); const url=new URL('https://kite.zerodha.com/connect/login'); url.searchParams.set('v','3'); url.searchParams.set('api_key',apiKey); url.searchParams.set('redirect_uri',redirectUri); return NextResponse.redirect(url.toString()) }

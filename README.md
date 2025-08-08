@@ -1,9 +1,16 @@
-# NSE Top Gainers (Last 1 Hour) — No Alias Edition
+# NSE Top Gainers (Last 1 Hour) — with Zerodha Login
+Includes a Login with Zerodha flow and prior fixes (no aliases).
 
-This build removes the `@/*` alias and uses **relative imports** everywhere,
-and fixes the CSS import path. It should deploy on Vercel without config.
+## Env vars (Vercel → Project → Settings → Environment Variables)
+- KITE_API_KEY
+- KITE_API_SECRET
+- KITE_REDIRECT_URL  (e.g. https://YOUR.vercel.app/api/kite/callback)
+- USE_LIVE=false
 
-## Deploy
-1) Upload these files (unzipped) to your GitHub repo **root** (so `app/` and `package.json` are visible).
-2) On Vercel: New Project → import repo → Framework: **Next.js** → Deploy.
-3) (Optional) Add env vars later: `KITE_API_KEY`, `KITE_API_SECRET`, `USE_LIVE`.
+## Routes
+- /api/kite/login → redirects to Zerodha login
+- /api/kite/callback → exchanges request_token → access_token, stores secure cookie
+- /api/kite/status → returns { ok: boolean }
+- /api/top-gainers → mock data for now; set USE_LIVE=true + wire real fetch
+
+Upload contents to repo root and deploy on Vercel (Next.js).
