@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import axios from 'axios';
 
 const SYMBOLS = [
@@ -9,13 +9,113 @@ const SYMBOLS = [
   { label: 'ICICIBANK', value: 'ICICIBANK' },
 ];
 
-function dateLabel(x){
-  try{ return new Date(x).toISOString().split('T')[0]; }catch{ return x; }
+function FocusPanel({ base, expiryKey, strikes, mapByStrike }){
+  // Default anchor: if NIFTY + 2025-08-14 -> 24350 else center strike
+  const defaultAnchor = (base==='NIFTY' && expiryKey?.startsWith('2025-08-14')) ? 24350 :
+    (strikes[Math.floor(strikes.length/2)] || null);
+  const [anchor, setAnchor] = useState(defaultAnchor);
+  const [q, setQ] = useState({}); // quotes map by "NFO:TRADINGSYMBOL"
+  const timerRef = useRef(null);
+
+  // compute 4 CE (>= anchor) and 4 PE (<= anchor) strikes from available list
+  const stepStrikes = useMemo(()=>{
+    if(!strikes?.length || !anchor) return { ce:[], pe:[] };
+    const sorted = [...strikes].sort((a,b)=>a-b);
+    const ce = sorted.filter(s=> s>=anchor).slice(0,4);
+    const pes = sorted.filter(s=> s<=anchor).slice(-4).reverse(); // anchor, lower1, lower2, lower3
+    return { ce, pe: pes };
+  },[strikes, anchor]);
+
+  const instruments = useMemo(()=>{
+    const out = [];
+    for(const s of stepStrikes.ce){
+      const ce = mapByStrike[`${s}-CE`];
+      if(ce) out.push(`NFO:${ce.tradingsymbol}`);
+    }
+    for(const s of stepStrikes.pe){
+      const pe = mapByStrike[`${s}-PE`];
+      if(pe) out.push(`NFO:${pe.tradingsymbol}`);
+    }
+    return out;
+  },[stepStrikes, mapByStrike]);
+
+  async function fetchQuotes(){
+    if(!instruments.length) return;
+    try{
+      const { data } = await axios.get('/api/quotes', { params:{ instruments: instruments.join(',') } });
+      setQ(data.quotes || {});
+    }catch(e){
+      // ignore
+    }
+  }
+
+  useEffect(()=>{
+    fetchQuotes();
+    if(timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(fetchQuotes, 180000); // 3 minutes
+    return ()=> timerRef.current && clearInterval(timerRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [instruments.join(',')]);
+
+  function cell(inst){
+    if(!inst) return '-';
+    const key = `NFO:${inst.tradingsymbol}`;
+    const qt = q[key];
+    if(!qt) return '-';
+    const ltp = qt.last_price;
+    let bid = qt?.depth?.buy?.[0]?.price || null;
+    let ask = qt?.depth?.sell?.[0]?.price || null;
+    let bq = qt?.depth?.buy?.[0]?.quantity || null;
+    let aq = qt?.depth?.sell?.[0]?.quantity || null;
+    let show = (typeof ltp === 'number' && ltp>0) ? ltp : null;
+    if(show===null){
+      if(bid && ask) show = ((bid+ask)/2).toFixed(2);
+      else if(qt?.ohlc?.close) show = qt.ohlc.close;
+    }
+    return (
+      <div>
+        <div><b>{show ?? '-'}</b></div>
+        <div className="muted" style={{fontSize:12}}>B {bid ?? '-'} ({bq ?? '-'}) | A {ask ?? '-'} ({aq ?? '-'})</div>
+      </div>
+    );
+  }
+
+  const rows = (
+    <div className="grid" style={{gridTemplateColumns:'1fr 1fr 1fr', gap:8}}>
+      <div className="muted">CALLS</div><div className="muted">STRIKE</div><div className="muted">PUTS</div>
+      {Array.from({length: Math.max(stepStrikes.ce.length, stepStrikes.pe.length)}).map((_,i)=>{
+        const sCE = stepStrikes.ce[i];
+        const sPE = stepStrikes.pe[i];
+        const ce = mapByStrike[`${sCE}-CE`];
+        const pe = mapByStrike[`${sPE}-PE`];
+        return (
+          <div className="row" key={i} style={{display:'contents'}}>
+            <div className="card">{cell(ce)}</div>
+            <div className="card" style={{textAlign:'center', fontWeight:700}}>{sCE ?? sPE ?? '-'}</div>
+            <div className="card">{cell(pe)}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <div className="card">
+      <h3>Focused View (±4 from anchor)</h3>
+      <div className="controls">
+        <label>Anchor strike
+          <input type="number" value={anchor || ''} onChange={e=> setAnchor(Number(e.target.value)||'')} />
+        </label>
+        <div className="muted" style={{alignSelf:'end'}}>Auto-refresh every 3 minutes</div>
+      </div>
+      {rows}
+    </div>
+  );
 }
 
 export default function Options(){
   const [base, setBase] = useState('NIFTY');
-  const [expiries, setExpiries] = useState([]);
+  const [expiries, setExpiries] = useState([]); // YYYY-MM-DD keys
   const [expiry, setExpiry] = useState('');
   const [strikes, setStrikes] = useState([]);
   const [chain, setChain] = useState([]);
@@ -85,7 +185,7 @@ export default function Options(){
         </label>
         <label>Expiry (filtered to today → 2025-08-14)
           <select value={expiry} onChange={e=>setExpiry(e.target.value)}>
-            {expiries.map(x=> <option key={x} value={x}>{dateLabel(x)}</option>)}
+            {expiries.map(x=> <option key={x} value={x}>{x}</option>)}
           </select>
         </label>
       </div>
@@ -148,6 +248,9 @@ export default function Options(){
           ) : <div className="muted">Pick a CE/PE cell from the chain to prefill.</div>}
         </div>
       </div>
+
+      {/* Focused 8-pack below */}
+      <FocusPanel base={base} expiryKey={expiry} strikes={strikes} mapByStrike={mapByStrike} />
     </div>
   );
 }
