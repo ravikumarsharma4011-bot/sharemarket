@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import axios from 'axios';
 
 export default function Diag(){
@@ -17,7 +18,7 @@ export default function Diag(){
       <div className="card"><pre>{JSON.stringify({ status }, null, 2)}</pre></div>
       <div className="card"><pre>{JSON.stringify({ login }, null, 2)}</pre></div>
       {error && <div className="card"><b>Error:</b> {error}</div>}
-      <a className="btn" href="/">← Back</a>
+      <Link className="btn" href="/">← Back</Link>
     </div>
   );
 }

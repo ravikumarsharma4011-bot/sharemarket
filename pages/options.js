@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
+import Link from 'next/link';
 import axios from 'axios';
-
-function dateOnly(x){ try { return String(x).split('T')[0]; } catch { return x; } }
 
 const SYMBOLS = [
   { label: 'NIFTY', value: 'NIFTY' },
@@ -10,6 +9,8 @@ const SYMBOLS = [
   { label: 'TATASTEEL', value: 'TATASTEEL' },
   { label: 'ICICIBANK', value: 'ICICIBANK' },
 ];
+
+function dateOnly(x){ try { return String(x).split('T')[0]; } catch { return x; } }
 
 function FocusPanel({ base, expiryKey, strikes, mapByStrike }){
   const defaultAnchor = (base==='NIFTY' && dateOnly(expiryKey)==='2025-08-14') ? 24350 :
@@ -130,7 +131,7 @@ export default function Options(){
   },[chain]);
 
   useEffect(()=>{ fetchChain(base); },[base]);
-  useEffect(()=>{ if(expiry) fetchChain(base, expiry); },[expiry]);
+  useEffect(()=>{ if(expiry) fetchChain(base, expiry); },[expiry, base]);
 
   async function fetchChain(b,e){
     const { data } = await axios.get('/api/options/chain',{ params:{ base:b, expiry:e } });
@@ -171,7 +172,7 @@ export default function Options(){
   return (
     <div className="container">
       <div className="header">
-        <a href="/" className="btn outline">← Back</a>
+        <Link href="/" className="btn outline">← Back</Link>
         <h1>Options Trading</h1>
       </div>
 

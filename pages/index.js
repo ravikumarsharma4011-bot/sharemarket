@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import axios from 'axios';
 
 export default function Home(){
   const [session, setSession] = useState(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+
   useEffect(()=>{ axios.get('/api/auth/status').then(r=>setSession(r.data.session)).catch(()=>{}); },[]);
 
   async function login(){
@@ -29,6 +31,11 @@ export default function Home(){
     }
   }
 
+  async function logout(){
+    try{ await axios.get('/api/auth/logout'); }catch{}
+    window.location.reload();
+  }
+
   return (
     <div className="container">
       <h1>sharemarket0607</h1>
@@ -36,9 +43,9 @@ export default function Home(){
       {session?.access_token ? (
         <div className="card">
           <h3>Logged in</h3>
-          <a className="btn" href="/options">Go to Options Trading</a>
+          <Link className="btn" href="/options">Go to Options Trading</Link>
           <div style={{marginTop:10}}>
-            <a className="btn outline" href="/api/auth/logout">Logout</a>
+            <button className="btn outline" onClick={logout}>Logout</button>
           </div>
         </div>
       ) : (
@@ -60,7 +67,7 @@ export default function Home(){
         </div>
         <div className="card">
           <h3>Diagnostics</h3>
-          <a className="btn outline" href="/diag">Open /diag</a>
+          <Link className="btn outline" href="/diag">Open /diag</Link>
         </div>
       </div>
     </div>
