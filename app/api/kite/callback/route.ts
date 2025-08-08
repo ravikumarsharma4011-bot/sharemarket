@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { setCookie } from '../../../lib/cookies'
+import { setCookie } from '../../../../lib/cookies'
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url)
