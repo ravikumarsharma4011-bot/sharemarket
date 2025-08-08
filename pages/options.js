@@ -9,6 +9,10 @@ const SYMBOLS = [
   { label: 'ICICIBANK', value: 'ICICIBANK' },
 ];
 
+function dateLabel(x){
+  try{ return new Date(x).toISOString().split('T')[0]; }catch{ return x; }
+}
+
 export default function Options(){
   const [base, setBase] = useState('NIFTY');
   const [expiries, setExpiries] = useState([]);
@@ -79,7 +83,7 @@ export default function Options(){
         </label>
         <label>Expiry
           <select value={expiry} onChange={e=>setExpiry(e.target.value)}>
-            {expiries.map(x=> <option key={x} value={x}>{x}</option>)}
+            {expiries.map(x=> <option key={x} value={x}>{dateLabel(x)}</option>)}
           </select>
         </label>
       </div>
@@ -95,11 +99,11 @@ export default function Options(){
               return (
                 <div className="row" key={s}>
                   <div className={"cell " + (ce ? "clickable" : "")} onClick={()=> pick(s,'CE')}>
-                    {ce ? (ce.last_price || '-') : '-'}
+                    {ce ? ((ce.last_price ?? '-') ) : '-'}
                   </div>
                   <div className="cell strike">{s}</div>
                   <div className={"cell " + (pe ? "clickable" : "")} onClick={()=> pick(s,'PE')}>
-                    {pe ? (pe.last_price || '-') : '-'}
+                    {pe ? ((pe.last_price ?? '-') ) : '-'}
                   </div>
                 </div>
               );
